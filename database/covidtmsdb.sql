@@ -1,0 +1,60 @@
+-- COVID19-VMS clean installation. No patient data or default administrator.
+-- Import into a NEW covidtmsdb database. Existing installations use tools/migrate.php.
+CREATE DATABASE IF NOT EXISTS covidtmsdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE covidtmsdb;
+CREATE TABLE tbladmin (
+ ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ AdminName VARCHAR(120) NOT NULL,
+ AdminuserName VARCHAR(20) NOT NULL UNIQUE,
+ MobileNumber VARCHAR(15) NOT NULL,
+ Email VARCHAR(120) NOT NULL,
+ Password VARCHAR(255) NOT NULL,
+ AdminRegdate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE tblpatients (
+ id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ FullName VARCHAR(120) NOT NULL,
+ MobileNumber VARCHAR(15) NOT NULL UNIQUE,
+ DateOfBirth DATE NOT NULL,
+ GovtIssuedId VARCHAR(150) NOT NULL,
+ GovtIssuedIdNo VARCHAR(150) NOT NULL,
+ FullAddress VARCHAR(255) NOT NULL,
+ State VARCHAR(200) NOT NULL,
+ RegistrationDate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE tblphlebotomist (
+ id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ EmpID VARCHAR(100) NOT NULL UNIQUE,
+ FullName VARCHAR(120) NOT NULL,
+ MobileNumber VARCHAR(15) NOT NULL,
+ RegDate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE tbltestrecord (
+ id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ OrderNumber BIGINT NOT NULL UNIQUE,
+ PatientMobileNumber VARCHAR(15) NOT NULL,
+ TestType VARCHAR(100) NOT NULL,
+ TestTimeSlot VARCHAR(120) NOT NULL,
+ ReportStatus VARCHAR(100) NOT NULL DEFAULT 'New',
+ TestResult VARCHAR(30) DEFAULT NULL,
+ FinalReport VARCHAR(150) DEFAULT NULL,
+ ReportUploadTime VARCHAR(200) DEFAULT NULL,
+ RegistrationDate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ AssignedtoEmpId VARCHAR(100) DEFAULT NULL,
+ AssigntoName VARCHAR(180) DEFAULT NULL,
+ AssignedTime VARCHAR(100) DEFAULT NULL,
+ INDEX idx_test_status (ReportStatus),
+ INDEX idx_test_registered (RegistrationDate),
+ CONSTRAINT fk_test_patient FOREIGN KEY (PatientMobileNumber) REFERENCES tblpatients (MobileNumber),
+ CONSTRAINT fk_test_employee FOREIGN KEY (AssignedtoEmpId) REFERENCES tblphlebotomist (EmpID)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE tblreporttracking (
+ id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ OrderNumber BIGINT NOT NULL,
+ Remark VARCHAR(255) NOT NULL,
+ Status VARCHAR(120) NOT NULL,
+ PostingTime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ RemarkBy INT DEFAULT NULL,
+ CONSTRAINT fk_tracking_order FOREIGN KEY (OrderNumber) REFERENCES tbltestrecord (OrderNumber),
+ CONSTRAINT fk_tracking_admin FOREIGN KEY (RemarkBy) REFERENCES tbladmin (ID)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

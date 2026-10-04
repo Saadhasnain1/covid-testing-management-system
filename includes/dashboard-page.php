@@ -1,0 +1,16 @@
+<?php
+require_once __DIR__.'/bootstrap.php'; require_admin(); $admin=true; $title='Operations overview';
+$counts=rows("SELECT COALESCE(NULLIF(ReportStatus,''),'New') status,COUNT(*) n FROM tbltestrecord GROUP BY status");
+$byStatus=array_column($counts,'n','status'); $total=array_sum($byStatus);
+$staff=(int)one('SELECT COUNT(*) n FROM tblphlebotomist')['n'];
+$patients=(int)one('SELECT COUNT(*) n FROM tblpatients')['n'];
+$latest=rows('SELECT t.*,p.FullName FROM tbltestrecord t JOIN tblpatients p ON p.MobileNumber=t.PatientMobileNumber ORDER BY t.id DESC LIMIT 5');
+require __DIR__.'/header.php';
+?><div class="page-heading"><div><div class="eyebrow">OPERATIONS WORKSPACE</div><h1>Testing at a glance</h1><p>A current view of your requests, collection team and reports.</p></div><a class="btn btn-primary" href="all-test.php">View all requests &rarr;</a></div>
+<div class="stats"><?php $cards=[['Total requests',$total,'all-test.php'],['New requests',$byStatus['New']??0,'new-test.php'],['Assigned',$byStatus['Assigned']??0,'assigned-test.php'],['Collection in progress',$byStatus['On the Way for Collection']??0,'ontheway-samplecollection-test.php'],['Samples collected',$byStatus['Sample Collected']??0,'sample-collected-test.php'],['At the laboratory',$byStatus['Sent to Lab']??0,'samplesent-lab-test.php'],['Reports delivered',$byStatus['Delivered']??0,'reportdelivered-test.php'],['Phlebotomists',$staff,'manage-phlebotomist.php']];
+foreach($cards as [$label,$number,$link]): ?><a class="panel stat" data-category="<?= e(['new-test.php'=>'new','samplesent-lab-test.php'=>'lab','reportdelivered-test.php'=>'delivered'][$link] ?? 'default') ?>" href="<?= e($link) ?>"><span class="stat-icon"><?= ui_icon(['all-test.php'=>'request','new-test.php'=>'clock','assigned-test.php'=>'team','ontheway-samplecollection-test.php'=>'truck','sample-collected-test.php'=>'flask','samplesent-lab-test.php'=>'activity','reportdelivered-test.php'=>'report','manage-phlebotomist.php'=>'team'][$link]) ?></span><span class="stat-label"><?= e($label) ?></span><span class="stat-number"><?= e($number) ?></span><span class="stat-note">View records <?= ui_icon('arrow') ?></span></a><?php endforeach; ?></div>
+<div class="page-heading"><div><h2>Recent requests</h2><p><?= e($patients) ?> registered patients · Counts reflect each request's current stage.</p></div><a href="bwdates-report-ds.php">View date report</a></div>
+<div class="panel table-panel"><p class="table-scroll-hint">Scroll horizontally to view all request details.</p><div class="table-responsive"><table class="table" aria-label="Recent test requests"><thead><tr><th>Reference</th><th>Patient</th><th>Test</th><th>Status</th><th>Action</th></tr></thead><tbody>
+<?php foreach($latest as $record): ?><tr><td><?= e($record['OrderNumber']) ?></td><td><?= e($record['FullName']) ?></td><td><?= e($record['TestType']) ?></td><td><?= status_badge($record['ReportStatus']) ?></td><td><a class="btn btn-light btn-sm" href="test-details.php?tid=<?= e($record['id']) ?>">View request <?= ui_icon('arrow') ?></a></td></tr><?php endforeach; ?>
+<?php if (!$latest): ?><tr><td colspan="5" class="empty"><strong>No requests yet.</strong><span class="empty-description">Submitted patient requests will appear here.</span></td></tr><?php endif; ?></tbody></table></div></div>
+<?php require __DIR__.'/footer.php'; ?>

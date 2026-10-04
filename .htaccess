@@ -1,0 +1,7 @@
+Options -Indexes
+<FilesMatch "^\\.">
+    Require all denied
+</FilesMatch>
+<FilesMatch "^(config.*\\.php|.*\\.(sql|log|zip))$">
+    Require all denied
+</FilesMatch>
